@@ -1,3 +1,5 @@
+// Example code for the usage of the ValidateFields trait and validate_json_for_type function
+// comments edited manually not ai
 use aws_config::meta::region::RegionProviderChain;
 use aws_config::load_from_env;
 use aws_sdk_sns::Client as SnsClient;
@@ -9,7 +11,7 @@ use field_validator::ValidateFields;
 use field_validator_derive::ValidateFields;
 
 
-// use std::time::Instant;
+
 
 mod rdbc;
 use crate::rdbc::get_vcu_data;
@@ -67,18 +69,10 @@ async fn lambda_handler(event: LambdaEvent<Value>) -> Result<Value, Error> {
             }));
         }
     };
+//rest of the code logic 
 
-    // Your existing setup…
-    let bike_identifier = payload.bike_identifier;
-    let target_mode     = payload.change_to_mode;
-    let shared_config   = aws_config::from_env().load().await;
-    let sns_client      = SnsClient::new(&shared_config);
 
-    let current_mode = match payload.current_mode {
-        Some(mode) if !mode.is_empty() => mode,
-        _ => fetch_current_mode(&bike_identifier).await,
-    };
-
+    // value level error handling implmeneted 
     let current_index = match MODES.iter().position(|&m| m == current_mode) {
         Some(idx) => idx,
         None => {
@@ -107,44 +101,7 @@ async fn lambda_handler(event: LambdaEvent<Value>) -> Result<Value, Error> {
         }
     };
 
-    let steps = (target_index + MODES.len() - current_index) % MODES.len();
-
-    if steps == 0 {
-        return Ok(json!({
-            "status":  "success",
-            "message": format!("Bike already in mode {}", target_mode)
-        }));
-    }
-
-    let sns_data = SnsPayload {
-        bike_identifier: bike_identifier.clone(),
-        steps,
-    };
-    let topic_arn = "arn:aws:sns:ap-south-1:776601892319:RideModeMqttWrite";
-    let message   = serde_json::to_string(&sns_data)?;
-    snspush(&sns_client, topic_arn, &message).await;
-
-    Ok(json!({
-        "status":  "success",
-        "message": format!("Mode change request processed for bike: {}", bike_identifier)
-    }))
+   //rest of the code 
 }
 
 
-async fn fetch_current_mode(bike_identifier: &str) -> String {
-    let (ride_mode, _, _, _, _, _, _, _) = get_vcu_data(&bike_identifier.to_string()).await;
-    ride_mode
-}
-
-async fn snspush(client: &SnsClient, topic_arn: &str, data: &str) {
-    match client
-        .publish()
-        .topic_arn(topic_arn)
-        .message(data)
-        .send()
-        .await
-    {
-        Ok(_) => println!("SNS message sent successfully."),
-        Err(err) => eprintln!("SNS publish error: {}", err),
-    }
-}
