@@ -18,6 +18,7 @@ http = {workspace = true}
 tokio-stream = {workspace = true}
 redis_rs = {workspace = true}
 chrono = {workspace = true}
-redis = {workspace = true}
+redis = {workspace = true}\
+// add these two to the cargo.toml of the code or the workspace 
 field_validator = { path = "../field_validator" }
 field_validator_derive = { path = "../field_validator_derive" }
