@@ -8,4 +8,5 @@ proc-macro = true
 [dependencies]
 syn = {workspace = true}
 quote = {workspace = true}
+proc-macro2 = "1.0"
 field_validator = { path = "../field_validator" }
